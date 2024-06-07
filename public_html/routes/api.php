@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Config;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,25 +16,23 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 Route::post('/auth', function (Request $request) {
-    $response_code = 200;
-    $response = [
-        'meta' => [
-            'success' => true,
-            'errors' => []
-        ],
-        'data' => [
-            'token' => 'TOOOOOKEN',
-            'minutes_to_expire' => '1440'
-        ]
-    ];
+    $credentials = request(['username', 'password']);
     
-    if ($request->username != 'tester' || $request->password != 'PASSWORD') {
-        $response_code = 401;
+    if ($token = auth()->attempt($credentials)) {
+        $code = 200;
+        $response = [
+            'meta' => [
+                'success' => true,
+                'errors' => []
+            ],
+            'data' => [
+                'token' => $token,
+                'minutes_to_expire' => Config::get('jwt.ttl')
+            ]
+        ];
+    } else {
+        $code = 401;
         $response = [
             'meta' => [
                 'success' => false,
@@ -43,80 +43,232 @@ Route::post('/auth', function (Request $request) {
         ];
     }
 
-    return response()->json($response, $response_code);
+    return response()->json($response, $code);
 });
 
-Route::post('/lead', function (Request $request) {
-    return response()->json([
-        'meta' => [
-            'success' => true,
-            'errors' => []
-        ],
-        'data' => [
-            'id' => '1',
-            'name' => 'Mi candidato',
-            'source' => 'Fotocasa',
-            'owner' => 2,
-            'created_at' => '2020-09-01 16:16:16',
-            'created_by' => 1
-        ]
-    ], 201);
-});
-Route::get('/lead/{id}', function (Request $request) {
-    $response_code = 200;
-    $response = [
-        'meta' => [
-            'success'=> true,
-            'errors'=> []
-        ],
-        'data' => [
-            'id' => "$request->id",
-            'name' => 'Mi candidato',
-            'source' => 'Fotocasa',
-            'owner' => 2,
-            'created_at' => '2020-09-01 16:16:16',
-            'created_by' => 1
-        ]
-    ];
+Route::group(['middleware' => ['api']], function () {
+    Route::post('/lead', function (Request $request) {
+        $token = JWTAuth::getToken();
+
+        try {
+            if (!$token) {
+                return response()->json([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'Token not found'
+                        ]
+                    ]
+                ], 401);
+            }
     
-    if ($request->id != 1) {
-        $response_code = 404;
-        $response = [
-            'meta' => [
-                'success' => false,
-                'errors' => [
-                    'No lead found'
+            $user = JWTAuth::parseToken($token)->authenticate();
+    
+            if (!$user) {
+                return response()->json([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'User not found'
+                        ]
+                    ]
+                ], 401);
+            }
+    
+            $code = 201;
+            $response = [
+                'meta' => [
+                    'success' => true,
+                    'errors' => []
+                ],
+                'data' => [
+                    'id' => '1',
+                    'name' => 'Mi candidato',
+                    'source' => 'Fotocasa',
+                    'owner' => 2,
+                    'created_at' => '2020-09-01 16:16:16',
+                    'created_by' => 1
                 ]
-            ]
-        ];
-    }
-    
-    return response()->json($response, $response_code);
-});
+            ];
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            $code = 401;
+            $response = [
+                'meta' => [
+                    'success' => false,
+                    'errors' => [
+                        'Token expired'
+                    ]
+                ]
+            ];
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            $code = 401;
+            $response = [
+                'meta' => [
+                    'success' => false,
+                    'errors' => [
+                        'Invalid token'
+                    ]
+                ]
+            ];
+        }
 
-Route::get('/leads', function (Request $request) {
-    return response()->json([
-        'meta' => [
-            'success'=> true,
-            'errors'=> []
-        ],
-        'data' => [
-            [
-                'id' => "1",
-                'name' => 'Mi candidato',
-                'source' => 'Fotocasa',
-                'owner' => 2,
-                'created_at' => '2020-09-01 16:16:16',
-                'created_by' => 1
-            ],
-            [
-                'id' => "2",
-                'name' => 'Mi candidato 2',
-                'source' => 'Habitaclia',
-                'owner' => 2,
-                'created_at' => '2020-09-01 16:16:16',
-                'created_by' => 1
-            ],
-        ]
-    ], 200);
+        return response()->json($response, $code);
+    });
+    Route::get('/lead/{id}', function (Request $request) {
+        $token = JWTAuth::getToken();
+
+        try {
+            if (!$token) {
+                return response()->json([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'Token not found'
+                        ]
+                    ]
+                ], 401);
+            }
+    
+            $user = JWTAuth::parseToken($token)->authenticate();
+
+            if (!$user) {
+                return response()->json([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'User not found'
+                        ]
+                    ]
+                ], 401);
+            }
+    
+            $code = 200;
+            $response = [
+                'meta' => [
+                    'success'=> true,
+                    'errors'=> []
+                ],
+                'data' => [
+                    'id' => "$request->id",
+                    'name' => 'Mi candidato',
+                    'source' => 'Fotocasa',
+                    'owner' => 2,
+                    'created_at' => '2020-09-01 16:16:16',
+                    'created_by' => 1
+                ]
+            ];
+            
+            if ($request->id != 1) {
+                $code = 404;
+                $response = [
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'No lead found'
+                        ]
+                    ]
+                ];
+            }
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            $code = 401;
+            $response = [
+                'meta' => [
+                    'success' => false,
+                    'errors' => [
+                        'Token expired'
+                    ]
+                ]
+            ];
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            $code = 401;
+            $response = [
+                'meta' => [
+                    'success' => false,
+                    'errors' => [
+                        'Invalid token'
+                    ]
+                ]
+            ];
+        }
+
+        return response()->json($response, $code);
+    });
+    
+    Route::get('/leads', function (Request $request) {
+        $token = JWTAuth::getToken();
+
+        try {
+            if (!$token) {
+                return response()->json([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'Token not found'
+                        ]
+                    ]
+                ], 401);
+            }
+    
+            $user = JWTAuth::parseToken($token)->authenticate();
+
+            if (!$user) {
+                return response()->json([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'User not found'
+                        ]
+                    ]
+                ], 401);
+            }
+    
+            $code = 200;
+            $response = [
+                'meta' => [
+                    'success'=> true,
+                    'errors'=> []
+                ],
+                'data' => [
+                    [
+                        'id' => "1",
+                        'name' => 'Mi candidato',
+                        'source' => 'Fotocasa',
+                        'owner' => 2,
+                        'created_at' => '2020-09-01 16:16:16',
+                        'created_by' => 1
+                    ],
+                    [
+                        'id' => "2",
+                        'name' => 'Mi candidato 2',
+                        'source' => 'Habitaclia',
+                        'owner' => 2,
+                        'created_at' => '2020-09-01 16:16:16',
+                        'created_by' => 1
+                    ],
+                ]
+            ];
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            $code = 401;
+            $response = [
+                'meta' => [
+                    'success' => false,
+                    'errors' => [
+                        'Token expired'
+                    ]
+                ]
+            ];
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            $code = 401;
+            $response = [
+                'meta' => [
+                    'success' => false,
+                    'errors' => [
+                        'Invalid token'
+                    ]
+                ]
+            ];
+        }
+
+        return response()->json($response, $code);
+    });
 });

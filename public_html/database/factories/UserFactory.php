@@ -27,7 +27,7 @@ class UserFactory extends Factory
             'username' => fake()->userName(),
             'password' => static::$password ??= Hash::make('password'),
             'last_login' => fake()->dateTime('-1 week'),
-            'is_active' => fake()->boollean(),
+            'is_active' => fake()->boolean(),
             'role' => fake()->randomElement(['manager', 'agent']),
         ];
     }

@@ -14,7 +14,6 @@ services:
     ports:
       - 3306:3306
     environment:
-      - MYSQL_HOST=localhost
       - MYSQL_DATABASE=monoma
       - MYSQL_ROOT_PASSWORD=monoma_admin
     volumes:

@@ -3,36 +3,51 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use App\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Token;
 
 class AccessTest extends TestCase
 {
+    use RefreshDatabase;
+    
     public function test_post_auth_ok(): void
     {
+        $this->seed();
+        
+        $username = 'tester';
+        $password = 'PASSWORD';
+
+        $user = User::where('username', $username)->first();
+
         $response = $this->post('/api/auth', [
-            'username' => 'tester',
-            'password' => 'PASSWORD'
+            'username' => $username,
+            'password' => $password
         ]);
 
         $response->assertStatus(200);
-        $response->assertExactJson([
-            'meta' => [
-                'success' => true,
-                'errors' => []
-            ],
-            'data' => [
-                'token' => 'TOOOOOKEN',
-                'minutes_to_expire' => '1440'
-            ]
-        ]);
+
+        $response_content = json_decode($response->getContent(), true);
+
+        $payload = JWTAuth::decode(new Token($response_content['data']['token']));
+        $subject = $payload->get('sub');
+        
+        $this->assertTrue($subject == $user->id);
     }
 
     public function test_post_auth_unauthorized(): void
     {
+        $this->seed();
+        
+        $username = 'tester';
+        $password = 'PASSWORD';
+
+        $user = User::where('username', $username)->first();
+        
         $response = $this->post('/api/auth', [
-            'username' => 'tester',
-            'password' => 'PASSWORD1'
+            'username' => $username,
+            'password' => $password . '1'
         ]);
 
         $response->assertStatus(401);
@@ -40,7 +55,7 @@ class AccessTest extends TestCase
             'meta' => [
                 'success' => false,
                 'errors' => [
-                    "Password incorrect for: tester"
+                    "Password incorrect for: $username"
                 ]
             ]
         ]);
