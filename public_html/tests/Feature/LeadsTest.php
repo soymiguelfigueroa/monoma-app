@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
+use App\Models\Candidate;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LeadsTest extends TestCase
@@ -17,6 +18,19 @@ class LeadsTest extends TestCase
 
         $user = User::where('username', 'tester')->first();
 
+        $candidates = Candidate::all();
+
+        foreach ($candidates as $item) {
+            $candidatesCollection[] = [
+                'id' => $item->id,
+                'name' => $item->name,
+                'source' => $item->source,
+                'owner' => $item->owner,
+                'created_at' => $item->created_at,
+                'created_by' => $item->created_by
+            ];
+        }
+
         $token = JWTAuth::fromUser($user);
 
         $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
@@ -27,24 +41,7 @@ class LeadsTest extends TestCase
                 'success'=> true,
                 'errors'=> []
             ],
-            'data' => [
-                [
-                    'id' => "1",
-                    'name' => 'Mi candidato',
-                    'source' => 'Fotocasa',
-                    'owner' => 2,
-                    'created_at' => '2020-09-01 16:16:16',
-                    'created_by' => 1
-                ],
-                [
-                    'id' => "2",
-                    'name' => 'Mi candidato 2',
-                    'source' => 'Habitaclia',
-                    'owner' => 2,
-                    'created_at' => '2020-09-01 16:16:16',
-                    'created_by' => 1
-                ],
-            ]
+            'data' => $candidatesCollection
         ]);
     }
 
@@ -56,6 +53,19 @@ class LeadsTest extends TestCase
 
         $token = JWTAuth::fromUser($user);
 
+        $candidates = $user->candidates;
+
+        foreach ($candidates as $item) {
+            $candidatesCollection[] = [
+                'id' => $item->id,
+                'name' => $item->name,
+                'source' => $item->source,
+                'owner' => $item->owner,
+                'created_at' => $item->created_at,
+                'created_by' => $item->created_by
+            ];
+        }
+
         $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
 
         $response->assertStatus(200);
@@ -64,24 +74,7 @@ class LeadsTest extends TestCase
                 'success'=> true,
                 'errors'=> []
             ],
-            'data' => [
-                [
-                    'id' => "1",
-                    'name' => 'Mi candidato',
-                    'source' => 'Fotocasa',
-                    'owner' => 2,
-                    'created_at' => '2020-09-01 16:16:16',
-                    'created_by' => 1
-                ],
-                [
-                    'id' => "2",
-                    'name' => 'Mi candidato 2',
-                    'source' => 'Habitaclia',
-                    'owner' => 2,
-                    'created_at' => '2020-09-01 16:16:16',
-                    'created_by' => 1
-                ],
-            ]
+            'data' => $candidatesCollection
         ]);
     }
 

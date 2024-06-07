@@ -15,6 +15,11 @@ class RepositoriesServiceProvider extends ServiceProvider
             \App\Contracts\LeadRepositoryInterface::class, 
             \App\Repositories\LeadRepository::class
         );
+
+        $this->app->bind(
+            \App\Contracts\LeadsRepositoryInterface::class, 
+            \App\Repositories\LeadsRepository::class
+        );
     }
 
     /**
