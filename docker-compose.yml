@@ -1,0 +1,43 @@
+version: '3.5'
+networks:
+  default:
+volumes:
+  db:
+  cache:
+services:
+  db:
+    container_name: db
+    image: mysql:5.7.44
+    networks:
+      - default
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_HOST=localhost
+      - MYSQL_DATABASE=monoma
+      - MYSQL_ROOT_PASSWORD=monoma_admin
+    volumes:
+      - db:/var/lib/mysql
+  app:
+    container_name: app
+    image: php:8.2.18-apache
+    networks:
+      - default
+    ports:
+      - 80:80
+    volumes:
+      - ./public_html:/var/www/html
+      - ./logs:/var/log/apache2
+    build:
+      context: .
+      dockerfile: Dockerfile
+  cache:
+    container_name: cache
+    image: redis:7.0-alpine
+    networks:
+      - default
+    ports:
+      - 6379:6379
+    volumes:
+      - cache:/data
