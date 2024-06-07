@@ -9,33 +9,9 @@ class LeadsController extends Controller
 {
     public function get(Request $request) 
     {
-        $token = JWTAuth::getToken();
+        $tokenValidated = $this->validateToken(JWTAuth::getToken());
 
-        try {
-            if (!$token) {
-                return response()->json([
-                    'meta' => [
-                        'success' => false,
-                        'errors' => [
-                            'Token not found'
-                        ]
-                    ]
-                ], 401);
-            }
-    
-            $user = JWTAuth::parseToken($token)->authenticate();
-
-            if (!$user) {
-                return response()->json([
-                    'meta' => [
-                        'success' => false,
-                        'errors' => [
-                            'User not found'
-                        ]
-                    ]
-                ], 401);
-            }
-    
+        if ($tokenValidated['success']) {
             $code = 200;
             $response = [
                 'meta' => [
@@ -61,26 +37,9 @@ class LeadsController extends Controller
                     ],
                 ]
             ];
-        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
-            $code = 401;
-            $response = [
-                'meta' => [
-                    'success' => false,
-                    'errors' => [
-                        'Token expired'
-                    ]
-                ]
-            ];
-        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-            $code = 401;
-            $response = [
-                'meta' => [
-                    'success' => false,
-                    'errors' => [
-                        'Invalid token'
-                    ]
-                ]
-            ];
+        } else {
+            $code = $tokenValidated['code'];
+            $response = $tokenValidated['response'];
         }
 
         return response()->json($response, $code);

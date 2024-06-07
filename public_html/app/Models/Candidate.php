@@ -12,6 +12,8 @@ class Candidate extends Model
 
     protected $table = 'candidato';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'name',
         'source',

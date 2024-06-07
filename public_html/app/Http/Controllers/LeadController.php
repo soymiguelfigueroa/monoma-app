@@ -2,75 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LeadResource;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Models\Candidate;
+use Illuminate\Support\Carbon;
 
 class LeadController extends Controller
 {
     public function create(Request $request)
     {
-        $token = JWTAuth::getToken();
+        $tokenValidated = $this->validateToken(JWTAuth::getToken());
 
-        try {
-            if (!$token) {
-                return response()->json([
+        if ($tokenValidated['success']) {
+            $user = $tokenValidated['user'];
+
+            if ($user->role == 'manager') {
+                try {
+                    $lead = new Candidate;
+                    $lead->name = $request->name;
+                    $lead->source = $request->source;
+                    $lead->owner = $request->owner;
+                    $lead->created_at = Carbon::now()->format('Y-m-d H:m:s');
+                    $lead->created_by = $user->id;
+                    $lead->save();
+
+                    $code = 201;
+                    $response = new LeadResource($lead);
+                } catch (\Exception $e) {
+                    $code = 500;
+                    $response = [
+                        'meta' => [
+                            'success' => false,
+                            'errors' => [
+                                'The lead could not be saved'
+                            ]
+                        ]
+                    ];
+                }
+            } else {
+                $code = 403;
+                $response = [
                     'meta' => [
                         'success' => false,
-                        'errors' => [
-                            'Token not found'
+                        'errors'=> [
+                            'You cannot create candidates'
                         ]
                     ]
-                ], 401);
+                ];
             }
-    
-            $user = JWTAuth::parseToken($token)->authenticate();
-    
-            if (!$user) {
-                return response()->json([
-                    'meta' => [
-                        'success' => false,
-                        'errors' => [
-                            'User not found'
-                        ]
-                    ]
-                ], 401);
-            }
-    
-            $code = 201;
-            $response = [
-                'meta' => [
-                    'success' => true,
-                    'errors' => []
-                ],
-                'data' => [
-                    'id' => '1',
-                    'name' => 'Mi candidato',
-                    'source' => 'Fotocasa',
-                    'owner' => 2,
-                    'created_at' => '2020-09-01 16:16:16',
-                    'created_by' => 1
-                ]
-            ];
-        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
-            $code = 401;
-            $response = [
-                'meta' => [
-                    'success' => false,
-                    'errors' => [
-                        'Token expired'
-                    ]
-                ]
-            ];
-        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-            $code = 401;
-            $response = [
-                'meta' => [
-                    'success' => false,
-                    'errors' => [
-                        'Invalid token'
-                    ]
-                ]
-            ];
+        } else {
+            $code = $tokenValidated['code'];
+            $response = $tokenValidated['response'];
         }
 
         return response()->json($response, $code);
@@ -78,33 +61,9 @@ class LeadController extends Controller
 
     public function get(Request $request)
     {
-        $token = JWTAuth::getToken();
+        $tokenValidated = $this->validateToken(JWTAuth::getToken());
 
-        try {
-            if (!$token) {
-                return response()->json([
-                    'meta' => [
-                        'success' => false,
-                        'errors' => [
-                            'Token not found'
-                        ]
-                    ]
-                ], 401);
-            }
-    
-            $user = JWTAuth::parseToken($token)->authenticate();
-
-            if (!$user) {
-                return response()->json([
-                    'meta' => [
-                        'success' => false,
-                        'errors' => [
-                            'User not found'
-                        ]
-                    ]
-                ], 401);
-            }
-    
+        if ($tokenValidated['success']) {
             $code = 200;
             $response = [
                 'meta' => [
@@ -132,26 +91,9 @@ class LeadController extends Controller
                     ]
                 ];
             }
-        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
-            $code = 401;
-            $response = [
-                'meta' => [
-                    'success' => false,
-                    'errors' => [
-                        'Token expired'
-                    ]
-                ]
-            ];
-        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-            $code = 401;
-            $response = [
-                'meta' => [
-                    'success' => false,
-                    'errors' => [
-                        'Invalid token'
-                    ]
-                ]
-            ];
+        } else {
+            $code = $tokenValidated['code'];
+            $response = $tokenValidated['response'];
         }
 
         return response()->json($response, $code);

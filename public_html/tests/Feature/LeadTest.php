@@ -6,12 +6,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Carbon;
 
 class LeadTest extends TestCase
 {
     use RefreshDatabase;
     
-    public function test_post_lead_ok(): void
+    public function test_post_lead_by_manager(): void
     {
         $this->seed();
 
@@ -19,10 +20,12 @@ class LeadTest extends TestCase
 
         $token = JWTAuth::fromUser($user);
 
+        $agent = User::where('role', 'agent')->first();
+
         $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
             'name' => 'Mi candidato',
             'source' => 'Fotocasa',
-            'owner' => 2
+            'owner' => $agent->id
         ]);
 
         $response->assertStatus(201);
@@ -32,12 +35,39 @@ class LeadTest extends TestCase
                 'errors' => []
             ],
             'data' => [
-                'id' => '1',
+                'id' => 1,
                 'name' => 'Mi candidato',
                 'source' => 'Fotocasa',
-                'owner' => 2,
-                'created_at' => '2020-09-01 16:16:16',
-                'created_by' => 1
+                'owner' => $agent->id,
+                'created_at' => Carbon::now()->format('Y-m-d H:m:s'),
+                'created_by' => $user->id
+            ]
+        ]);
+    }
+
+    public function test_post_lead_by_agent(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'agent_tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        $agent = User::where('role', 'agent')->first();
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
+            'name' => 'Mi candidato',
+            'source' => 'Fotocasa',
+            'owner' => $agent->id
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'meta' => [
+                'success' => false,
+                'errors' => [
+                    'You cannot create candidates'
+                ]
             ]
         ]);
     }
