@@ -11,11 +11,48 @@ class LeadsTest extends TestCase
 {
     use RefreshDatabase;
     
-    public function test_get_leads_ok(): void
+    public function test_get_leads_by_manager_ok(): void
     {
         $this->seed();
 
         $user = User::where('username', 'tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            'meta' => [
+                'success'=> true,
+                'errors'=> []
+            ],
+            'data' => [
+                [
+                    'id' => "1",
+                    'name' => 'Mi candidato',
+                    'source' => 'Fotocasa',
+                    'owner' => 2,
+                    'created_at' => '2020-09-01 16:16:16',
+                    'created_by' => 1
+                ],
+                [
+                    'id' => "2",
+                    'name' => 'Mi candidato 2',
+                    'source' => 'Habitaclia',
+                    'owner' => 2,
+                    'created_at' => '2020-09-01 16:16:16',
+                    'created_by' => 1
+                ],
+            ]
+        ]);
+    }
+
+    public function test_get_leads_by_agent_ok(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'agent_tester')->first();
 
         $token = JWTAuth::fromUser($user);
 

@@ -18,7 +18,15 @@ class DatabaseSeeder extends Seeder
         \App\Models\User::factory()->create([
             'username' => 'tester',
             'password' => Hash::make('PASSWORD'),
-            'is_active' => true
+            'is_active' => true,
+            'role' => 'manager'
+        ]);
+
+        \App\Models\User::factory()->create([
+            'username' => 'agent_tester',
+            'password' => Hash::make('PASSWORD'),
+            'is_active' => true,
+            'role' => 'agent'
         ]);
     }
 }
