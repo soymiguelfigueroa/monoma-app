@@ -15,18 +15,23 @@ class DatabaseSeeder extends Seeder
     {
         \App\Models\User::factory(10)->create();
         
-        \App\Models\User::factory()->create([
+        $manager = \App\Models\User::factory()->create([
             'username' => 'tester',
             'password' => Hash::make('PASSWORD'),
             'is_active' => true,
             'role' => 'manager'
         ]);
 
-        \App\Models\User::factory()->create([
+        $agent = \App\Models\User::factory()->create([
             'username' => 'agent_tester',
             'password' => Hash::make('PASSWORD'),
             'is_active' => true,
             'role' => 'agent'
+        ]);
+
+        \App\Models\Candidate::factory(10)->create([
+            'owner' => $agent->id,
+            'created_by' => $manager->id
         ]);
     }
 }

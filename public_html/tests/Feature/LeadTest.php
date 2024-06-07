@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Candidate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
@@ -28,6 +29,8 @@ class LeadTest extends TestCase
             'owner' => $agent->id
         ]);
 
+        $candidate = Candidate::latest()->first();
+
         $response->assertStatus(201);
         $response->assertExactJson([
             'meta' => [
@@ -35,7 +38,7 @@ class LeadTest extends TestCase
                 'errors' => []
             ],
             'data' => [
-                'id' => 1,
+                'id' => $candidate->id,
                 'name' => 'Mi candidato',
                 'source' => 'Fotocasa',
                 'owner' => $agent->id,
@@ -112,11 +115,13 @@ class LeadTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('username', 'tester')->first();
+        $user = User::where('username', 'agent_tester')->first();
 
         $token = JWTAuth::fromUser($user);
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/1");
+        $userCandidate = $user->candidates()->inRandomOrder()->first();
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/$userCandidate->id");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -125,12 +130,12 @@ class LeadTest extends TestCase
                 'errors'=> []
             ],
             'data' => [
-                'id' => "1",
-                'name' => 'Mi candidato',
-                'source' => 'Fotocasa',
-                'owner' => 2,
-                'created_at' => '2020-09-01 16:16:16',
-                'created_by' => 1
+                'id' => $userCandidate->id,
+                'name' => $userCandidate->name,
+                'source' => $userCandidate->source,
+                'owner' => $userCandidate->owner,
+                'created_at' => $userCandidate->created_at,
+                'created_by' => $userCandidate->created_by
             ]
         ]);
     }
@@ -175,7 +180,9 @@ class LeadTest extends TestCase
 
         $token = JWTAuth::fromUser($user);
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/2");
+        $candidateIdThatNotExists = Candidate::orderBy('id', 'desc')->first()->id + 1;
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/$candidateIdThatNotExists");
 
         $response->assertStatus(404);
         $response->assertExactJson([

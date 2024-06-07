@@ -19,7 +19,7 @@ class CandidateFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'source' => faek()->word(),
+            'source' => fake()->word(),
             'owner' => User::factory()->create(['role' => 'agent'])->id,
             'created_at' => fake()->dateTime('-1 week'),
             'created_by' => User::factory()->create(['role' => 'manager'])->id,

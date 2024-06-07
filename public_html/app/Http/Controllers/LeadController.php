@@ -3,13 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\LeadResource;
+use App\Contracts\LeadRepositoryInterface;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\Candidate;
-use Illuminate\Support\Carbon;
 
 class LeadController extends Controller
 {
+    private $leadRepository;
+
+    public function __construct(LeadRepositoryInterface $leadRepository)
+    {
+        $this->leadRepository = $leadRepository;
+    }
+    
     public function create(Request $request)
     {
         $tokenValidated = $this->validateToken(JWTAuth::getToken());
@@ -19,13 +26,7 @@ class LeadController extends Controller
 
             if ($user->role == 'manager') {
                 try {
-                    $lead = new Candidate;
-                    $lead->name = $request->name;
-                    $lead->source = $request->source;
-                    $lead->owner = $request->owner;
-                    $lead->created_at = Carbon::now()->format('Y-m-d H:m:s');
-                    $lead->created_by = $user->id;
-                    $lead->save();
+                    $lead = $this->leadRepository->createLead(new Candidate, $request, $user);
 
                     $code = 201;
                     $response = new LeadResource($lead);
@@ -64,23 +65,14 @@ class LeadController extends Controller
         $tokenValidated = $this->validateToken(JWTAuth::getToken());
 
         if ($tokenValidated['success']) {
-            $code = 200;
-            $response = [
-                'meta' => [
-                    'success'=> true,
-                    'errors'=> []
-                ],
-                'data' => [
-                    'id' => "$request->id",
-                    'name' => 'Mi candidato',
-                    'source' => 'Fotocasa',
-                    'owner' => 2,
-                    'created_at' => '2020-09-01 16:16:16',
-                    'created_by' => 1
-                ]
-            ];
+            $user = $tokenValidated['user'];
             
-            if ($request->id != 1) {
+            $lead = $this->leadRepository->getLeadById($request->id, $user);
+
+            if ($lead) {
+                $code = 200;
+                $response = new LeadResource($lead);
+            } else {
                 $code = 404;
                 $response = [
                     'meta' => [
