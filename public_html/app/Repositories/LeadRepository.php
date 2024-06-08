@@ -10,6 +10,9 @@ use Illuminate\Support\Carbon;
 
 class LeadRepository implements LeadRepositoryInterface
 {
+    /**
+     * Save a lead
+     */
     public function createLead(Candidate $candidate, Request $request, User $user): Candidate
     {
         $candidate->name = $request->name;
@@ -22,6 +25,9 @@ class LeadRepository implements LeadRepositoryInterface
         return $candidate;
     }
 
+    /**
+     * Get a lead by its id
+     */
     public function getLeadById(int $id, User $user): ?Candidate
     {
         $candidate = Candidate::find($id);

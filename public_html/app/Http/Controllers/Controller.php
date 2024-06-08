@@ -11,6 +11,9 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
 
+    /**
+     * validate if a token is valid for the incoming request
+     */
     protected function validateToken($token)
     {
         try {

@@ -19,6 +19,9 @@ class LeadController extends Controller
         $this->leadRepository = $leadRepository;
     }
     
+    /**
+     * Lead storing. Only managers can store leads
+     */
     public function create(CreateLeadRequest $request)
     {
         $tokenValidated = $this->validateToken(JWTAuth::getToken());
@@ -62,6 +65,9 @@ class LeadController extends Controller
         return response()->json($response, $code);
     }
 
+    /**
+     * Get a specific lead
+     */
     public function get(Request $request)
     {
         $tokenValidated = $this->validateToken(JWTAuth::getToken());
@@ -69,13 +75,20 @@ class LeadController extends Controller
         if ($tokenValidated['success']) {
             $user = $tokenValidated['user'];
 
-            $cache_key = "get_lead_{$request->id}_for_user_{$user->id}";
+            $cache_key = "get_lead_{$request->id}_for_user_{$user->id}"; // Setting redis cache key for this case
 
+            /**
+             * If key does not exists in redis databases, get data from database
+             */
             if (!$lead = Redis::get($cache_key)) {
                 $lead = $this->leadRepository->getLeadById($request->id, $user);
             }
 
             if ($lead) {
+                /**
+                 * If $lead is Object, that means data comes from database. It is saved on redis.
+                 * Otherwise, create a Candidate instance with redis data.
+                 */
                 if (gettype($lead) == 'object') {
                     Redis::set($cache_key, $lead->toJson());
                 } elseif (gettype($lead) == 'string') {

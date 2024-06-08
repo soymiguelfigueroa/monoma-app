@@ -31,6 +31,8 @@ class Handler extends ExceptionHandler
 
     /**
      * Create a response object from the given validation exception.
+     * This method is overwritten to return json responses 
+     * in request form validation errors
      *
      * @param  \Illuminate\Validation\ValidationException  $e
      * @param  \Illuminate\Http\Request  $request

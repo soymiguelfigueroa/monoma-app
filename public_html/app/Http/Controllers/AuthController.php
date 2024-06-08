@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Config;
 
 class AuthController extends Controller
 {
+    /**
+     * Authentication method
+     */
     public function auth(Request $request)
     {
         $credentials = request(['username', 'password']);
