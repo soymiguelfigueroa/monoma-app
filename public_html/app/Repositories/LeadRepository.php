@@ -25,11 +25,9 @@ class LeadRepository implements LeadRepositoryInterface
     public function getLeadById(int $id, User $user): ?Candidate
     {
         $candidate = Candidate::find($id);
-        
+
         if ($user->role == 'manager' || $candidate->owner == $user->id) {
             return $candidate;
         }
-
-        return null;
     }
 }

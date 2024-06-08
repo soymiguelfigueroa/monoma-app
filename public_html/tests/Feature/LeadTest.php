@@ -9,6 +9,7 @@ use App\Models\User;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\DB;
 
 class LeadTest extends TestCase
 {
@@ -45,6 +46,66 @@ class LeadTest extends TestCase
                 'owner' => $agent->id,
                 'created_at' => Carbon::now()->format('Y-m-d H:m:s'),
                 'created_by' => $user->id
+            ]
+        ]);
+    }
+
+    public function test_post_lead_by_manager_with_errors_in_data(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        $agent = User::where('role', 'agent')->first();
+
+        $data = [
+            'name' => 123456,
+            'source' => 'Fotocasa',
+            'owner' => $agent->id
+        ];
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', $data);
+
+        $response->assertStatus(422);
+        $response->assertExactJson([
+                    'meta' => [
+                        'success' => false,
+                        'errors' => [
+                            'name' => [
+                                'The name field must be a string.'
+                            ]
+                        ]
+                    ]
+                ]);
+    }
+
+    public function test_post_lead_by_manager_with_exception(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        $agent = User::where('role', 'agent')->first();
+
+        DB::statement('drop table candidato');
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
+            'name' => 'Mi candidato',
+            'source' => 'Fotocasa',
+            'owner' => $agent->id
+        ]);
+
+        $response->assertStatus(500);
+        $response->assertExactJson([
+            'meta' => [
+                'success' => false,
+                'errors' => [
+                    'The lead could not be saved'
+                ]
             ]
         ]);
     }
@@ -107,6 +168,56 @@ class LeadTest extends TestCase
                 'success' => false,
                 'errors' => [
                     'Token expired'
+                ]
+            ]
+        ]);
+    }
+
+    public function test_post_lead_without_token(): void
+    {
+        $this->seed();
+        
+        $token = '';
+        
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
+            'name' => 'Mi candidato',
+            'source' => 'Fotocasa',
+            'owner' => 2
+        ]);
+
+        $response->assertStatus(401);
+        $response->assertExactJson([
+            'meta' => [
+                'success' => false,
+                'errors' => [
+                    'Token not found'
+                ]
+            ]
+        ]);
+    }
+
+    public function test_post_lead_with_token_not_found(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'agent_tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        DB::table('usuario')->where('username', '=', 'agent_tester')->delete();
+        
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
+            'name' => 'Mi candidato',
+            'source' => 'Fotocasa',
+            'owner' => 2
+        ]);
+
+        $response->assertStatus(401);
+        $response->assertExactJson([
+            'meta' => [
+                'success' => false,
+                'errors' => [
+                    'User not found'
                 ]
             ]
         ]);

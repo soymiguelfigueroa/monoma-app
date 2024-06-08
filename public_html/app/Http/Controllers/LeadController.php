@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\Candidate;
 use Illuminate\Support\Facades\Redis;
+use App\Http\Requests\CreateLeadRequest;
 
 class LeadController extends Controller
 {
@@ -18,7 +19,7 @@ class LeadController extends Controller
         $this->leadRepository = $leadRepository;
     }
     
-    public function create(Request $request)
+    public function create(CreateLeadRequest $request)
     {
         $tokenValidated = $this->validateToken(JWTAuth::getToken());
 

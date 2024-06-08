@@ -31,14 +31,14 @@ class LeadsController extends Controller
                 $leads = $this->leadsRepository->getLeads($user);
             }
 
-            if ($leads) {
+            if ((gettype($leads) == 'object' && $leads->count() > 0) || (gettype($leads) == 'string' && !empty($leads))) {
                 if (gettype($leads) == 'object') {
                     Redis::set($cache_key, $leads->toJson());
                 } elseif (gettype($leads) == 'string') {
                     $object = (array) json_decode($leads);
                     $leads = Candidate::hydrate($object);
                 }
-                
+
                 $code = 200;
                 $response = new LeadsCollection($leads);
             } else {

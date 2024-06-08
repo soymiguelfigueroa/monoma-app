@@ -177,6 +177,33 @@ class LeadsTest extends TestCase
         Redis::del($cache_key);
     }
 
+    public function test_get_leads_by_agent_with_cache_no_leads_found(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'agent_tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        Candidate::truncate();
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+
+        $response->assertStatus(404);
+        $response->assertExactJson([
+            'meta' => [
+                'success' => false,
+                'errors' => [
+                    'No leads found'
+                ]
+            ]
+        ]);
+
+        $cache_key = "get_leads_for_user_{$user->id}";
+        
+        Redis::del($cache_key);
+    }
+
     public function test_get_leads_unauthorized(): void
     {
         $this->seed();

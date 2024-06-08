@@ -22,14 +22,4 @@ class Candidate extends Model
         'created_at',
         'created_by',
     ];
-
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'id', 'owner');
-    }
-
-    public function created_by(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'id', 'created_by');
-    }
 }

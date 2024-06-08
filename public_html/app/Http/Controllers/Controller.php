@@ -63,19 +63,6 @@ class Controller extends BaseController
                     ]
                 ]
             ];
-        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-            return [
-                'success' => false,
-                'code' => 401,
-                'response' => [
-                    'meta' => [
-                        'success' => false,
-                        'errors' => [
-                            'Invalid token'
-                        ]
-                    ]
-                ]
-            ];
         }
     }
 }
