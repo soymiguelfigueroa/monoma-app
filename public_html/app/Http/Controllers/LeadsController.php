@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Contracts\LeadsRepositoryInterface;
 use App\Http\Resources\LeadsCollection;
+use Illuminate\Support\Facades\Redis;
+use App\Models\Candidate;
 
 class LeadsController extends Controller
 {
@@ -23,9 +25,20 @@ class LeadsController extends Controller
         if ($tokenValidated['success']) {
             $user = $tokenValidated['user'];
 
-            $leads = $this->leadsRepository->getLeads($user);
+            $cache_key = "get_leads_for_user_{$user->id}";
+
+            if (!$leads = Redis::get($cache_key)) {
+                $leads = $this->leadsRepository->getLeads($user);
+            }
 
             if ($leads) {
+                if (gettype($leads) == 'object') {
+                    Redis::set($cache_key, $leads->toJson());
+                } elseif (gettype($leads) == 'string') {
+                    $object = (array) json_decode($leads);
+                    $leads = Candidate::hydrate($object);
+                }
+                
                 $code = 200;
                 $response = new LeadsCollection($leads);
             } else {

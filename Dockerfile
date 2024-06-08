@@ -7,3 +7,6 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 RUN docker-php-ext-install pdo pdo_mysql
 RUN docker-php-ext-enable pdo_mysql
+RUN pecl install --force redis \
+    && rm -rf /tmp/pear \
+    && docker-php-ext-enable redis

@@ -8,6 +8,7 @@ use Tests\TestCase;
 use App\Models\User;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Redis;
 
 class LeadTest extends TestCase
 {
@@ -111,7 +112,7 @@ class LeadTest extends TestCase
         ]);
     }
 
-    public function test_get_lead_ok(): void
+    public function test_get_lead_without_cache_ok(): void
     {
         $this->seed();
 
@@ -138,6 +139,45 @@ class LeadTest extends TestCase
                 'created_by' => $userCandidate->created_by
             ]
         ]);
+
+        $cache_key = "get_lead_{$userCandidate->id}_for_user_{$user->id}";
+
+        Redis::del($cache_key);
+    }
+
+    public function test_get_lead_with_cache_ok(): void
+    {
+        $this->seed();
+
+        $user = User::where('username', 'agent_tester')->first();
+
+        $token = JWTAuth::fromUser($user);
+
+        $userCandidate = $user->candidates()->inRandomOrder()->first();
+
+        $cache_key = "get_lead_{$userCandidate->id}_for_user_{$user->id}";
+
+        Redis::set($cache_key, $userCandidate->toJson());
+
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/$userCandidate->id");
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            'meta' => [
+                'success'=> true,
+                'errors'=> []
+            ],
+            'data' => [
+                'id' => $userCandidate->id,
+                'name' => $userCandidate->name,
+                'source' => $userCandidate->source,
+                'owner' => $userCandidate->owner,
+                'created_at' => $userCandidate->created_at,
+                'created_by' => $userCandidate->created_by
+            ]
+        ]);
+
+        Redis::del($cache_key);
     }
 
     public function test_get_lead_unauthorized(): void
