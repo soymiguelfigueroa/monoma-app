@@ -12,12 +12,12 @@ class RepositoriesServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(
-            \App\Contracts\LeadRepositoryInterface::class, 
+            \App\Contracts\LeadRepositoryInterface::class,
             \App\Repositories\LeadRepository::class
         );
 
         $this->app->bind(
-            \App\Contracts\LeadsRepositoryInterface::class, 
+            \App\Contracts\LeadsRepositoryInterface::class,
             \App\Repositories\LeadsRepository::class
         );
     }

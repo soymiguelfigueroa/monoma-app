@@ -42,8 +42,6 @@ class AccessTest extends TestCase
         
         $username = 'tester';
         $password = 'PASSWORD';
-
-        $user = User::where('username', $username)->first();
         
         $response = $this->post('/api/auth', [
             'username' => $username,

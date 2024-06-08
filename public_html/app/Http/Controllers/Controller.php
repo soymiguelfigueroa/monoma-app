@@ -15,7 +15,7 @@ class Controller extends BaseController
     {
         try {
             if (!$token) {
-                return [
+                $response = [
                     'success' => false,
                     'code' => 401,
                     'response' => [
@@ -27,29 +27,31 @@ class Controller extends BaseController
                         ]
                     ]
                 ];
-            }
+            } else {
+                $user = JWTAuth::parseToken($token)->authenticate();
     
-            $user = JWTAuth::parseToken($token)->authenticate();
-    
-            if (!$user) {
-                return [
-                    'success' => false,
-                    'code' => 401,
-                    'response' => [
-                        'meta' => [
-                            'success' => false,
-                            'errors' => [
-                                'User not found'
+                if (!$user) {
+                    $response = [
+                        'success' => false,
+                        'code' => 401,
+                        'response' => [
+                            'meta' => [
+                                'success' => false,
+                                'errors' => [
+                                    'User not found'
+                                ]
                             ]
                         ]
-                    ]
-                ];
+                    ];
+                } else {
+                    $response = [
+                        'success'=> true,
+                        'user' => $user
+                    ];
+                }
             }
-    
-            return [
-                'success'=> true,
-                'user' => $user
-            ];
+
+            return $response;
         } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
             return [
                 'success' => false,

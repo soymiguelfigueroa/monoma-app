@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Redis;
 class LeadsTest extends TestCase
 {
     use RefreshDatabase;
+
+    private $apiLeadsPath = '/api/leads';
     
     public function test_get_leads_by_manager_without_cache_ok(): void
     {
@@ -36,7 +38,7 @@ class LeadsTest extends TestCase
 
         $token = JWTAuth::fromUser($user);
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadsPath}");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -81,7 +83,7 @@ class LeadsTest extends TestCase
 
         $token = JWTAuth::fromUser($user);
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadsPath}");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -118,7 +120,7 @@ class LeadsTest extends TestCase
             ];
         }
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadsPath}");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -163,7 +165,7 @@ class LeadsTest extends TestCase
 
         Redis::set($cache_key, $leads->toJson());
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadsPath}");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -187,7 +189,7 @@ class LeadsTest extends TestCase
 
         Candidate::truncate();
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadsPath}");
 
         $response->assertStatus(404);
         $response->assertExactJson([
@@ -223,7 +225,7 @@ class LeadsTest extends TestCase
          */
         $token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3MTc3NzE2NTgsImV4cCI6MTU5MTU0MTM3MSwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoiMSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjoibWFuYWdlciJ9.WVqYV9zLZglkj7Y40f7oZJ5hIl2lAAc8DchyJgmU5dc';
         
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/leads");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadsPath}");
 
         $response->assertStatus(401);
         $response->assertExactJson([

@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 class LeadTest extends TestCase
 {
     use RefreshDatabase;
+
+    private $apiLeadPath = '/api/lead';
+    private $testLeadName = 'Mi candidato';
     
     public function test_post_lead_by_manager(): void
     {
@@ -25,8 +28,8 @@ class LeadTest extends TestCase
 
         $agent = User::where('role', 'agent')->first();
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
-            'name' => 'Mi candidato',
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, [
+            'name' => $this->testLeadName,
             'source' => 'Fotocasa',
             'owner' => $agent->id
         ]);
@@ -41,7 +44,7 @@ class LeadTest extends TestCase
             ],
             'data' => [
                 'id' => $candidate->id,
-                'name' => 'Mi candidato',
+                'name' => $this->testLeadName,
                 'source' => 'Fotocasa',
                 'owner' => $agent->id,
                 'created_at' => Carbon::now()->format('Y-m-d H:m:s'),
@@ -66,7 +69,7 @@ class LeadTest extends TestCase
             'owner' => $agent->id
         ];
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', $data);
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, $data);
 
         $response->assertStatus(422);
         $response->assertExactJson([
@@ -93,8 +96,8 @@ class LeadTest extends TestCase
 
         DB::statement('drop table candidato');
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
-            'name' => 'Mi candidato',
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, [
+            'name' => $this->testLeadName,
             'source' => 'Fotocasa',
             'owner' => $agent->id
         ]);
@@ -120,8 +123,8 @@ class LeadTest extends TestCase
 
         $agent = User::where('role', 'agent')->first();
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
-            'name' => 'Mi candidato',
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, [
+            'name' => $this->testLeadName,
             'source' => 'Fotocasa',
             'owner' => $agent->id
         ]);
@@ -156,8 +159,8 @@ class LeadTest extends TestCase
          */
         $token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3MTc3NzE2NTgsImV4cCI6MTU5MTU0MTM3MSwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoiMSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjoibWFuYWdlciJ9.WVqYV9zLZglkj7Y40f7oZJ5hIl2lAAc8DchyJgmU5dc';
         
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
-            'name' => 'Mi candidato',
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, [
+            'name' => $this->testLeadName,
             'source' => 'Fotocasa',
             'owner' => 2
         ]);
@@ -179,8 +182,8 @@ class LeadTest extends TestCase
         
         $token = '';
         
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
-            'name' => 'Mi candidato',
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, [
+            'name' => $this->testLeadName,
             'source' => 'Fotocasa',
             'owner' => 2
         ]);
@@ -206,8 +209,8 @@ class LeadTest extends TestCase
 
         DB::table('usuario')->where('username', '=', 'agent_tester')->delete();
         
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post('/api/lead', [
-            'name' => 'Mi candidato',
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->post($this->apiLeadPath, [
+            'name' => $this->testLeadName,
             'source' => 'Fotocasa',
             'owner' => 2
         ]);
@@ -233,7 +236,7 @@ class LeadTest extends TestCase
 
         $userCandidate = $user->candidates()->inRandomOrder()->first();
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/$userCandidate->id");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadPath}/$userCandidate->id");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -270,7 +273,7 @@ class LeadTest extends TestCase
 
         Redis::set($cache_key, $userCandidate->toJson());
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/$userCandidate->id");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadPath}/$userCandidate->id");
 
         $response->assertStatus(200);
         $response->assertExactJson([
@@ -310,7 +313,7 @@ class LeadTest extends TestCase
          */
         $token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3MTc3NzE2NTgsImV4cCI6MTU5MTU0MTM3MSwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoiMSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjoibWFuYWdlciJ9.WVqYV9zLZglkj7Y40f7oZJ5hIl2lAAc8DchyJgmU5dc';
         
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/1");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadPath}/1");
 
         $response->assertStatus(401);
         $response->assertExactJson([
@@ -333,7 +336,7 @@ class LeadTest extends TestCase
 
         $candidateIdThatNotExists = Candidate::orderBy('id', 'desc')->first()->id + 1;
 
-        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("/api/lead/$candidateIdThatNotExists");
+        $response = $this->withHeaders(['Authorization' => "Bearer $token"])->get("{$this->apiLeadPath}/$candidateIdThatNotExists");
 
         $response->assertStatus(404);
         $response->assertExactJson([
