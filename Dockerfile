@@ -10,3 +10,5 @@ RUN docker-php-ext-enable pdo_mysql
 RUN pecl install --force redis \
     && rm -rf /tmp/pear \
     && docker-php-ext-enable redis
+RUN pecl install xdebug \
+    && docker-php-ext-enable xdebug
