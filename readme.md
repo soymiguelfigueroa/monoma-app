@@ -30,6 +30,10 @@ This is an app made in Laravel 10, with MySQL and Redis. the following technique
 
 <pre>$ docker-compose up -d --build</pre>
 
+- after that you only need to run this command without --build flag
+
+<pre>$ docker-compose up -d</pre>
+
 # Endpoints
 
 This app have 4 endpoints
